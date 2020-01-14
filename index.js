@@ -53,17 +53,18 @@ server.get("/api/users/:id", (req, res) => {
 });
 
 //create a User
-server.post("/api/user", (req, res) => {
+server.post("/api/users", (req, res) => {
   const userData = req.body;
-
+  const { name, bio } = req.body;
+  if (!name || !bio) {
+    res
+      .status(400)
+      .json({ errMsg: "Please provide a name and bio for the new user." });
+  }
   Users.insert(userData)
     .then(user => {
       console.log(user);
-      if (!user.name || !user.bio) {
-        res.status(400).json("Please provide a name and bio for the user.");
-      } else {
-        res.status(201).json();
-      }
+      res.status(201).json(userData);
     })
     .catch(err => {
       console.log(err);
@@ -81,10 +82,12 @@ server.delete("/api/users/:id", (req, res) => {
   Users.remove(id)
     .then(deleted => {
       // res.status(204).end(); one way of doing it without sending back a res
-      if (res.data.id != id) {
-        res.status(404).json("The user with the specified ID does not exist.");
+      if (!deleted) {
+        res
+          .status(404)
+          .json({ errMsg: "The user with the specified ID does not exist." });
       } else {
-        res.status(200).json(deleted);
+        res.status(200).json({ deleted });
       }
     })
     .catch(err => {
@@ -112,7 +115,9 @@ server.put("/api/users/:id", (req, res) => {
           res.status(201).json(user);
         });
       } else {
-        res.status(404).json(`The user with id ${id} was not found.`);
+        res
+          .status(404)
+          .json({ errMsg: `The user with id ${id} was not found.` });
       }
     })
     .catch(err => {
