@@ -1,6 +1,7 @@
 // implement your API here
 const express = require("express");
 const server = express();
+
 //middleware: teaches express new things
 server.use(express.json());
 
@@ -10,12 +11,11 @@ const Users = require("./data/db");
 
 //GET to "/"
 server.get("/", function(req, res) {
-  res.send({ hello: "William!" });
+  res.send({ hello: "Node API 1 Project!" });
 });
 
 //See a list of Users
-server.find("/api/users", (req, res) => {
-  //read the data from the database (Hubs)
+server.get("/api/users", (req, res) => {
   Users.find() //return a promise
     .then(users => {
       res.status(200).json(users);
@@ -30,28 +30,40 @@ server.find("/api/users", (req, res) => {
 });
 
 //See a list of Users by id
-server.findById("/api/users/:id", (req, res) => {
-  //read the data from the database (Hubs)
-  Users.find() //return a promise
-    .then(users => {
-      res.status(200).json(users);
+server.get("/api/users/:id", (req, res) => {
+  const id = req.params.id;
+  console.log(req, "request by id");
+
+  Users.findById(id) //return a promise
+    .then(user => {
+      console.log(user, "user");
+      if (user) {
+        res.status(200).json(user);
+      } else {
+        res.status(404).json("The specified user could not be found.");
+      }
     })
     .catch(err => {
       console.log(err);
       //handle the error
       res.status(500).json({
-        errMsg: "Sorry, we ran into an error getting the list of users."
+        errMsg: "Sorry, we ran into an error getting the specified user."
       });
     });
 });
 
 //create a User
-server.insert("/api/users", (req, res) => {
+server.post("/api/user", (req, res) => {
   const userData = req.body;
-  //NEVER trust the client! ALWAYS validate the data. For this demo we trust the data
-  Users.add(userData)
+
+  Users.insert(userData)
     .then(user => {
-      res.status(201).json(user);
+      console.log(user);
+      if (!user.name || !user.bio) {
+        res.status(400).json("Please provide a name and bio for the user.");
+      } else {
+        res.status(201).json();
+      }
     })
     .catch(err => {
       console.log(err);
@@ -63,13 +75,17 @@ server.insert("/api/users", (req, res) => {
 });
 
 //delete a User
-server.remove("/api/users/:id", (req, res) => {
+server.delete("/api/users/:id", (req, res) => {
   const id = req.params.id;
-  //NEVER trust the client! ALWAYS validate the data. For this demo we trust the data
+
   Users.remove(id)
     .then(deleted => {
       // res.status(204).end(); one way of doing it without sending back a res
-      res.status(200).json(deleted);
+      if (res.data.id != id) {
+        res.status(404).json("The user with the specified ID does not exist.");
+      } else {
+        res.status(200).json(deleted);
+      }
     })
     .catch(err => {
       console.log(err);
@@ -81,13 +97,23 @@ server.remove("/api/users/:id", (req, res) => {
 });
 
 //update a User
-server.update("/api/users/:id", (req, res) => {
+server.put("/api/users/:id", (req, res) => {
   const id = req.params.id;
-  //NEVER trust the client! ALWAYS validate the data. For this demo we trust the data
-  Users.put(id)
+  const { name, bio } = req.body;
+  if (!name || !bio) {
+    return res
+      .status(400)
+      .json({ errMsg: "Please provide a user name and bio." });
+  }
+  Users.update(id, { name, bio })
     .then(updated => {
-      // res.status(204).end(); one way of doing it without sending back a res
-      res.status(200).json(updated);
+      if (updated) {
+        Users.findById(id).then(user => {
+          res.status(201).json(user);
+        });
+      } else {
+        res.status(404).json(`The user with id ${id} was not found.`);
+      }
     })
     .catch(err => {
       console.log(err);
@@ -98,5 +124,5 @@ server.update("/api/users/:id", (req, res) => {
     });
 });
 
-const port = 8000;
+const port = 5000;
 server.listen(port, () => console.log(`\n ** api on port: ${port} ** \n`));
