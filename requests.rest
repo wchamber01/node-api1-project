@@ -1,0 +1,21 @@
+GET http://localhost:5000/api/users
+###
+GET http://localhost:5000/api/users/12
+###
+POST http://localhost:5000/api/users
+content-type: application/json
+
+{
+    "name": "test test",
+    "bio": "test test"
+}
+###
+DELETE "http://localhost:5000/api/user/14"
+###
+PUT http://localhost:5000/api/users/6
+content-type: application/json
+
+{
+    "name": "Legolas",
+    "bio": "A very light-footed walker"
+}
